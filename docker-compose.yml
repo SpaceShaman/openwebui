@@ -1,0 +1,45 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    environment:
+      - WEBUI_AUTH=false
+      - OPENAI_API_BASE_URLS=https://api.openai.com/v1;http://pipelines:9099
+      - OPENAI_API_KEYS=${OPENAI_API_KEY};0p3n-w3bu!
+      - DEFAULT_MODELS=chatgpt-4o-latest
+      - ENABLE_RAG_WEB_SEARCH=true
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - RAG_WEB_SEARCH_RESULT_COUNT=5
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+    env_file:
+      - .env
+    volumes:
+      - ./.data:/app/backend/data
+    restart: unless-stopped
+    ports:
+      - "666:8080"
+    networks:
+      - webui
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: pipelines
+    volumes:
+      - ./.pipelines:/app/pipelines
+    restart: unless-stopped
+    networks:
+      - webui
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    volumes:
+      - ./searxng:/etc/searxng
+    restart: unless-stopped
+    networks:
+      - webui
+
+networks:
+  webui:
+    driver: bridge
